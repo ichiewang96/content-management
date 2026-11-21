@@ -1,31 +1,22 @@
 # Content Things
 
-A single-page tracker for content creators. Capture ideas, then move posts from planned to posted — filming, editing, and the steps in between. You start with an Instagram board and can add any platform you actually use.
+I made Content Things to keep track of my Instagram and RedNote videos, from idea to filming to posting.
 
 ![Content Things board, with posts in every stage from Planned to Posted](screenshot.png)
 
-## Use it
+I park half-formed thoughts in the Ideas list, then turn one into a card when I'm actually going to film it. Each platform has its own board. I drag cards through Planned, Filming, Filmed, Editing, Ready to post, and Posted, and I star the ones I don't want to forget. The types are mine to rename, and I can add or rename a platform when I start posting somewhere new.
 
-Open **[Content Things](https://ichiewang96.github.io/content-management/)**. No sign-up and no install required.
+## Try it
 
-Your ideas and boards stay private in your own browser, on that device. Nothing is sent to a server. Clearing the browser's site data erases them, so export a backup regularly.
+[Try it](https://ichiewang96.github.io/content-management/)
 
-In the sidebar, choose **Add platform** to create another board. Pick a preset (TikTok, YouTube, RedNote, X, Facebook) or type your own name and emoji. Each platform has its own posts and content types. Open a board and choose **Edit board** to rename it, or to delete it. Deleting a board that already has posts asks you to confirm, because those posts are removed with it.
+Anyone's welcome to use it, or fork it and keep their own. Data stays in your own browser, so use Export to back up.
 
-Use **Export** in the sidebar to download a backup, and **Import** to restore it. Export before you clear browser data, switch browsers, or move to a new phone — that file is the only copy outside this browser. Older backups that only contain Instagram and RedNote still import.
+## Your own copy
 
-On a phone, add the page to your home screen (browser menu → **Add to Home Screen**) and it opens like an app.
+Fork the repo, then in your fork open **Settings → Pages**. Under **Build and deployment**, set **Source** to **Deploy from a branch**, branch **main**, folder **/ (root)**.
 
-## Make your own version
-
-1. Sign in to GitHub and open [this repository](https://github.com/ichiewang96/content-management).
-2. Click **Fork** and create the fork under your account.
-3. In your fork, open **Settings → Pages**.
-4. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
-5. Choose branch **main** and folder **/ (root)**, then save.
-6. After a minute or two, your copy is at `https://YOUR-USERNAME.github.io/content-management/`.
-
-The app is the single file `index.html`, plus a small icon and manifest so phones can install it. Edit `index.html` directly — there is no build step. People who open your copy keep their own data in their own browser.
+Your copy will be at `https://YOUR-USERNAME.github.io/content-management/`. It's just `index.html`. No build.
 
 ## License
 
