@@ -131,6 +131,26 @@
   .startoggle span:first-child{font-size:20px;color:var(--line)}.startoggle.on span:first-child{color:var(--star)}
   .dlgactions{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:20px}
   .hint{padding:8px 28px 0;font-size:13px;color:var(--muted);overflow-wrap:anywhere;max-width:100%}
+  .navitem{overflow-wrap:anywhere}
+  .navadd{border:1px dashed var(--line);color:var(--muted);justify-content:center}
+  .navadd:hover{color:var(--text);border-color:var(--muted)}
+  .boardtools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .presets{display:flex;flex-wrap:wrap;gap:8px}
+  .preset{border:1px solid var(--line);background:var(--bg2);border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:700;font-size:13.5px}
+  .preset:hover,.preset.on{border-color:var(--ig);background:var(--ig-soft)}
+  .preset:disabled{opacity:.4;cursor:default}
+  .emoji-field{width:64px;flex:none;text-align:center;font-size:22px}
+  .dlglead{margin:0;color:var(--muted);font-size:13.5px;line-height:1.45}
+  .backup{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin:16px 28px 0;padding:12px 14px;border:1px solid #f0dd9a;border-radius:14px;background:var(--star-soft);color:var(--text);font-size:14px;line-height:1.45}
+  .backup[hidden]{display:none}
+  .backup p{margin:0;flex:1 1 240px}
+  .backup-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .backup-later{border:0;background:transparent;color:var(--muted);font-weight:700;cursor:pointer;padding:8px 4px}
+  .backup-later:hover{color:var(--text)}
+  .lastbackup{flex:1 0 100%;margin:0;font-size:12px;color:var(--muted);font-weight:600}
+  @media (min-width:761px){
+    nav{flex:1;min-height:0;overflow:auto}
+  }
   .welcome{display:none;position:fixed;inset:0;z-index:40;overflow:auto;place-items:center;padding:calc(24px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
     background:radial-gradient(1200px 600px at 0% -10%,var(--run-soft),transparent 60%),radial-gradient(1000px 600px at 100% 0%,var(--ig-soft),transparent 55%),var(--bg)}
   .welcome.show{display:grid}
@@ -166,6 +186,7 @@
     .toolbar{padding:14px 16px 0;min-width:0;max-width:100%}
     .pills{min-width:0;max-width:100%}
     .hint,.quickadd,.ideas{padding-left:16px;padding-right:16px;min-width:0;max-width:100%}
+    .backup{margin:12px 16px 0}
     .ideas{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
     .board{display:flex;grid-template-columns:none;width:100%;min-width:0;max-width:100%;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;
       padding:14px 16px calc(28px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
@@ -189,6 +210,7 @@
     <p>A simple board for your videos and posts.</p>
     <p>Capture an idea, then move it from planned to posted.</p>
     <p>No sign-up. Everything stays in this browser.</p>
+    <p>Clearing this browser's site data erases your boards, so export a backup regularly.</p>
     <div class="welcome-actions">
       <button type="button" class="btn primary" onclick="startWithSamples()">Start with sample cards</button>
       <button type="button" class="btn" onclick="startEmpty()">Start empty</button>
@@ -204,13 +226,24 @@
     <button class="btn ghost" onclick="exportData()">Export</button>
     <button class="btn ghost" onclick="document.getElementById('imp').click()">Import</button>
     <input type="file" id="imp" accept=".json" hidden onchange="importData(event)">
+    <p class="lastbackup" id="lastBackup">Last backup: never</p>
   </div>
   <div class="hometip" id="homeTip"><span>Add this page to your phone's home screen from the browser menu.</span><button type="button" onclick="dismissTip()" aria-label="Dismiss tip">×</button></div>
 </aside>
 <main>
+<div class="backup" id="backup" hidden>
+  <p>Back up your board: your cards live only in this browser.</p>
+  <div class="backup-actions">
+    <button type="button" class="btn primary" onclick="exportData()">Export a backup</button>
+    <button type="button" class="backup-later" onclick="snoozeBackup()">Remind me later</button>
+  </div>
+</div>
 <header>
   <div><h2 id="pageTitle"></h2><p id="pageSub"></p></div>
-  <button class="btn primary" id="newBtn" onclick="view==='ideas'?openIdea():openEditor()">+ New post</button>
+  <div class="boardtools">
+    <button class="btn ghost" id="boardEdit" onclick="openBoardEditor()">Edit board</button>
+    <button class="btn primary" id="newBtn" onclick="view==='ideas'?openIdea():openEditor()">+ New post</button>
+  </div>
 </header>
 <div id="boardView"><div class="stats" id="stats"></div>
 <div class="toolbar"><div class="pills" id="filter"></div></div>
@@ -218,7 +251,7 @@
 <div class="board" id="board"></div></div>
 <div id="ideasView" style="display:none">
   <div class="quickadd"><input id="qIdea" placeholder="Jot down an idea and press Enter…" onkeydown="if(event.key==='Enter'&&!event.isComposing){quickIdea()}"><button class="btn primary" onclick="quickIdea()">Add idea</button></div>
-  <div class="hint">Ideas aren't tied to an account or a date. When you're ready to film one, hit "Make card" to send it to Instagram, RedNote, or both. Tap ☆ to mark a priority.</div>
+  <div class="hint">Ideas aren't tied to a platform or a date. When you're ready to film one, hit "Make card" to send it to any of your boards. Tap ☆ to mark a priority.</div>
   <div class="ideas" id="ideas"></div>
 </div>
 </main>
@@ -269,6 +302,39 @@
   <div class="dlgactions"><span></span><div style="display:flex;gap:8px"><button class="btn ghost" onclick="mdlg.close()">Cancel</button><button class="btn primary" onclick="makeCard()">Make card</button></div></div>
 </dialog>
 
+<dialog id="adlg">
+  <h3>Add a platform</h3>
+  <p class="dlglead">Each platform gets its own board. Start from a preset, or type any name.</p>
+  <label>Quick add</label>
+  <div class="presets" id="presets"></div>
+  <label>Name</label>
+  <div class="row" style="align-items:center">
+    <input id="pEmoji" class="emoji-field" maxlength="8" value="📌" aria-label="Emoji">
+    <input id="pName" placeholder="Newsletter, podcast, your shop…">
+  </div>
+  <div class="dlgactions">
+    <button type="button" class="btn ghost" onclick="adlg.close()">Cancel</button>
+    <button type="button" class="btn primary" onclick="addPlatform()">Add platform</button>
+  </div>
+</dialog>
+
+<dialog id="bdlg">
+  <h3>Edit board</h3>
+  <p class="dlglead">Renaming keeps every post and type on this board.</p>
+  <label>Name</label>
+  <div class="row" style="align-items:center">
+    <input id="bEmoji" class="emoji-field" maxlength="8" aria-label="Emoji">
+    <input id="bName" placeholder="Board name">
+  </div>
+  <div class="dlgactions">
+    <button type="button" class="btn ghost danger" id="bDel" onclick="deletePlatform()">Delete board</button>
+    <div style="display:flex;gap:8px">
+      <button type="button" class="btn ghost" onclick="bdlg.close()">Cancel</button>
+      <button type="button" class="btn primary" onclick="savePlatformEdit()">Save</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="tdlg">
   <h3>Edit types</h3>
   <p style="margin:0;color:var(--muted);font-size:13px" id="tdlgSub"></p>
@@ -280,15 +346,33 @@
 <script>
 const STAGES=[["Planned","var(--s-idea)"],["Filming","var(--s-film)"],["Filmed","var(--s-filmed)"],["Editing","var(--s-edit)"],["Ready to post","var(--s-ready)"],["Posted","var(--s-posted)"]];
 const DEFAULT_TYPES=[{name:"Running",color:"#ff6b4a",emoji:"🏃‍♀️"},{name:"IG vs Reality",color:"#8b5cf6",emoji:"📸"}];
+const PRESETS=[
+  {name:"TikTok",emoji:"🎵",color:"#111111"},
+  {name:"YouTube",emoji:"▶️",color:"#ff0033"},
+  {name:"RedNote",emoji:"📕",color:"#ff2442"},
+  {name:"X",emoji:"𝕏",color:"#1d1d1f"},
+  {name:"Facebook",emoji:"📘",color:"#1877f2"}
+];
+const KNOWN={
+  instagram:{name:"Instagram",emoji:"📷",color:"linear-gradient(135deg,#f58529,#dd2a7b,#8134af)"}
+};
+PRESETS.forEach(p=>{KNOWN[p.name.toLowerCase().replace(/[^a-z0-9]+/g,"")]=p;});
+const BOARD_COLORS=["#111111","#ff0033","#ff2442","#1877f2","#8b5cf6","#0ea5e9","#10b981","#f59e0b","#ec4899"];
+const RESERVED=new Set(["ideas","types","platforms","boards"]);
 const KEY3="haley-content-things-types-v1";
-let typesBy=JSON.parse(localStorage.getItem(KEY3)||"null")||{instagram:DEFAULT_TYPES.map(t=>({...t})),rednote:DEFAULT_TYPES.map(t=>({...t}))};
-const types=()=>typesBy[account];
-const saveTypes=()=>localStorage.setItem(KEY3,JSON.stringify(typesBy));
-const typeOf=n=>types().find(t=>t.name===n);
-const soft=c=>`color-mix(in srgb, ${c} 16%, transparent)`;
-let filters=[];
-function setFilter(i){filter=filters[i];render();}
 const KEY="haley-reel-board-v1";
+const KEY2="haley-content-things-v1";
+const KEY4="haley-content-things-ideas-v1";
+const KEYP="haley-content-things-platforms-v1";
+const TIPKEY="haley-content-things-hometip-v1";
+const today=()=>new Date().toISOString().slice(0,10);
+const cloneTypes=()=>DEFAULT_TYPES.map(t=>({...t}));
+const slug=name=>(name||"").toLowerCase().replace(/[^a-z0-9]+/g,"").slice(0,24);
+function knownMeta(id){
+  const k=KNOWN[id];
+  if(k) return {id,name:k.name,emoji:k.emoji,color:k.color};
+  return {id,name:id,emoji:"📌",color:BOARD_COLORS[0]};
+}
 const seed=[
   {title:"Thanksgiving training plan vs reality",kind:"IG vs Reality",stage:"Idea",notes:"Hook: My training plan vs what actually happens this week."},
   {title:"Turkey Trot or holiday-morning run",kind:"Running",stage:"Idea",notes:"Hook: Earning my pie, one mile at a time."},
@@ -298,49 +382,112 @@ const seed=[
   {title:"Long-run recap with pace and one lesson",kind:"Running",stage:"Idea"}
 ].map((c,i)=>({id:Date.now()+i,film:"",post:"",notes:"",starred:false,...c}));
 
-const KEY2="haley-content-things-v1";
-const KEY4="haley-content-things-ideas-v1";
-const TIPKEY="haley-content-things-hometip-v1";
-const today=()=>new Date().toISOString().slice(0,10);
 const firstVisit=localStorage.getItem(KEY2)===null&&localStorage.getItem(KEY)===null&&localStorage.getItem(KEY4)===null;
 let allowEmptyPersist=firstVisit;
-let boards, ideas;
-if(firstVisit){
-  boards={instagram:[],rednote:[]};
+let boards, ideas, typesBy, platforms, view, account, cards;
+function freshInstagram(){
+  platforms=[knownMeta("instagram")];
+  boards={instagram:[]};
   ideas=[];
+  typesBy={instagram:cloneTypes()};
+  view="instagram";
+  account="instagram";
+  cards=boards.instagram;
+}
+function boardIds(){return Object.keys(boards).filter(k=>Array.isArray(boards[k])&&!RESERVED.has(k));}
+function orderedIds(ids){
+  const rank=id=>id==="instagram"?0:id==="rednote"?1:2;
+  return [...ids].sort((a,b)=>rank(a)-rank(b));
+}
+function readTypes(){
+  try{const t=JSON.parse(localStorage.getItem(KEY3)||"null"); return t&&typeof t==="object"&&!Array.isArray(t)?t:{};}
+  catch{return {};}
+}
+function loadPlatforms(persist){
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem(KEYP)||"null");}catch{saved=null;}
+  const ids=boardIds();
+  if(Array.isArray(saved)&&saved.length){
+    platforms=saved.filter(p=>p&&p.id&&!RESERVED.has(String(p.id))).map(p=>({
+      id:String(p.id),name:String(p.name||p.id),emoji:String(p.emoji||"📌"),color:String(p.color||"#8b5cf6")
+    }));
+  }else platforms=orderedIds(ids).map(knownMeta);
+  const have=new Set(platforms.map(p=>p.id));
+  orderedIds(ids).forEach(id=>{if(!have.has(id)){platforms.push(knownMeta(id));have.add(id);}});
+  if(!platforms.length) platforms=[knownMeta("instagram")];
+  platforms.forEach(p=>{
+    if(!Array.isArray(boards[p.id])) boards[p.id]=[];
+    if(!Array.isArray(typesBy[p.id])) typesBy[p.id]=cloneTypes();
+  });
+  if(persist){try{localStorage.setItem(KEYP,JSON.stringify(platforms));}catch(e){}}
+}
+function syncView(){
+  const ids=platforms.map(p=>p.id);
+  if(view==="ideas"){if(!ids.includes(account)) account=ids[0];}
+  else if(!ids.includes(view)){view=ids[0];account=view;}
+  else account=view;
+  if(!Array.isArray(boards[account])) boards[account]=[];
+  cards=boards[account];
+}
+if(firstVisit){
+  freshInstagram();
 }else{
   boards=JSON.parse(localStorage.getItem(KEY2)||"null");
-  if(!boards){boards={instagram:JSON.parse(localStorage.getItem(KEY)||"null")||seed,rednote:[]};}
+  if(!boards){boards={instagram:JSON.parse(localStorage.getItem(KEY)||"null")||seed.map(c=>({...c})),rednote:[]};}
+  typesBy=readTypes();
   ideas=JSON.parse(localStorage.getItem(KEY4)||"null");
   if(!ideas){ideas=[];const seen=new Set();
-    ["instagram","rednote"].forEach(b=>{boards[b]=boards[b].filter(c=>{if(c.stage!=="Idea")return true;const k=c.title.trim().toLowerCase();
+    boardIds().forEach(b=>{boards[b]=boards[b].filter(c=>{if(c.stage!=="Idea")return true;const k=(c.title||"").trim().toLowerCase();
       if(!seen.has(k)){seen.add(k);ideas.push({id:c.id,title:c.title,notes:c.notes||"",starred:!!c.starred,created:today()});}return false;});});
     localStorage.setItem(KEY4,JSON.stringify(ideas));localStorage.setItem(KEY2,JSON.stringify(boards));}
-  ["instagram","rednote"].forEach(b=>boards[b].forEach(c=>{if(c.stage==="Idea")c.stage="Planned"}));
+  boardIds().forEach(b=>boards[b].forEach(c=>{if(c.stage==="Idea")c.stage="Planned";}));
+  const hadPlatforms=localStorage.getItem(KEYP)!==null;
+  loadPlatforms(!hadPlatforms);
+  view=localStorage.getItem(KEY2+"-active")||"";
+  account="";
+  syncView();
 }
 const saveIdeas=()=>{localStorage.setItem(KEY4,JSON.stringify(ideas));if(allowEmptyPersist&&localStorage.getItem(KEY2)===null)localStorage.setItem(KEY2,JSON.stringify(boards));};
-let view=localStorage.getItem(KEY2+"-active")||"instagram";
-let account=view==="ideas"?"instagram":view;
-let cards=boards[account];
-const VIEWS={ideas:["💡 Ideas","linear-gradient(135deg,#f5b301,#ff6b4a)"]};
-const ACCOUNTS={instagram:["📷 Instagram","linear-gradient(135deg,#f58529,#dd2a7b,#8134af)"],rednote:["📕 RedNote","#ff2442"]};
+function platformById(id){return platforms.find(p=>p.id===id);}
+function pname(id){const p=platformById(id);return p?p.name:id;}
+const types=()=>typesBy[account]||(typesBy[account]=cloneTypes());
+const saveTypes=()=>localStorage.setItem(KEY3,JSON.stringify(typesBy));
+const savePlatforms=()=>{try{localStorage.setItem(KEYP,JSON.stringify(platforms));}catch(e){}};
+const typeOf=n=>types().find(t=>t.name===n);
+const soft=c=>`color-mix(in srgb, ${c} 16%, transparent)`;
+let filters=[];
+function setFilter(i){filter=filters[i];render();}
 function switchAccount(a){view=a;if(a!=="ideas"){account=a;cards=boards[a];}localStorage.setItem(KEY2+"-active",a);filter="All";render();}
 let filter="All",editing=null;
 const dlg=document.getElementById("dlg");
+const adlg=document.getElementById("adlg");
+const bdlg=document.getElementById("bdlg");
 const save=()=>{boards[account]=cards;localStorage.setItem(KEY2,JSON.stringify(boards));if(allowEmptyPersist&&localStorage.getItem(KEY4)===null)localStorage.setItem(KEY4,JSON.stringify(ideas));};
 const esc=s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt=d=>d?new Date(d+"T00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"}):"";
+function uniqueId(name){
+  let base=slug(name);
+  if(!base||RESERVED.has(base)) base=(base||"board")+"board";
+  let id=base,n=2;
+  const taken=x=>RESERVED.has(x)||Object.prototype.hasOwnProperty.call(boards,x)||platforms.some(p=>p.id===x);
+  while(taken(id)){id=base+n;n++;}
+  return id;
+}
 
 function render(){
-  const item=(k,label,bg,n)=>`<button class="navitem ${k===view?'on':''}" style="--nb:${bg}" onclick="switchAccount('${k}')"><span class="ico">${label.split(" ")[0]}</span>${label.split(" ").slice(1).join(" ")}<span class="cnt">${n}</span></button>`;
-  nav.innerHTML=`<div class="navsec">Brainstorm</div>`+item("ideas",VIEWS.ideas[0],VIEWS.ideas[1],ideas.length)
-    +`<div class="navsec">Boards</div>`+Object.entries(ACCOUNTS).map(([k,[l,bg]])=>item(k,l,bg,boards[k].length)).join("");
-  pageTitle.textContent=view==="ideas"?"💡 Ideas":ACCOUNTS[account][0]+" board";
-  pageSub.textContent=view==="ideas"?"Everything you might make someday. No dates, no account yet.":"Drag cards from Planned to Posted.";
+  const item=(k,emoji,name,bg,n)=>`<button class="navitem ${k===view?'on':''}" style="--nb:${bg}" onclick="switchAccount('${k}')"><span class="ico">${emoji}</span><span class="navlabel">${esc(name)}</span><span class="cnt">${n}</span></button>`;
+  const p=platformById(account);
+  nav.innerHTML=`<div class="navsec">Brainstorm</div>`+item("ideas","💡","Ideas","linear-gradient(135deg,#f5b301,#ff6b4a)",ideas.length)
+    +`<div class="navsec">Boards</div>`+platforms.map(b=>item(b.id,b.emoji,b.name,b.color,(boards[b.id]||[]).length)).join("")
+    +`<button type="button" class="navitem navadd" onclick="openAddPlatform()"><span class="ico">＋</span><span class="navlabel">Add platform</span></button>`;
   const isIdeas=view==="ideas";
+  pageTitle.textContent=isIdeas?"💡 Ideas":`${p?p.emoji:""} ${p?p.name:"Board"} board`;
+  pageSub.textContent=isIdeas?"Everything you might make someday. No dates, no platform yet.":"Drag cards from Planned to Posted.";
   boardView.style.display=isIdeas?"none":"";ideasView.style.display=isIdeas?"":"none";
   newBtn.textContent=isIdeas?"+ New idea":"+ New post";
-  document.title="Content Things · "+(isIdeas?"Ideas":ACCOUNTS[account][0].slice(3));
+  boardEdit.style.display=isIdeas?"none":"";
+  document.title="Content Things · "+(isIdeas?"Ideas":(p?p.name:"Board"));
+  refreshBackup();
   if(isIdeas){renderIdeas();return;}
   const counts={All:cards.length,"★ Priority":cards.filter(c=>c.starred).length};
   types().forEach(t=>counts[t.name]=cards.filter(c=>c.kind===t.name).length);
@@ -381,11 +528,12 @@ function drop(e,stage){
   const c=cards.find(x=>x.id==e.dataTransfer.getData("text/plain"));
   if(c){c.stage=stage;if(stage==="Posted"&&!c.post)c.post=today();if((stage==="Filming"||stage==="Filmed")&&!c.film)c.film=today();save();render();}
 }
-let formAcct="instagram";
-function fillKinds(val){fKind.innerHTML=`<option value="">No type</option>`+typesBy[formAcct].map(t=>`<option value="${esc(t.name)}">${t.emoji} ${esc(t.name)}</option>`).join("");
-  fKind.value=typesBy[formAcct].some(t=>t.name===val)?val:"";}
-function drawAcct(){fAcct.innerHTML=Object.entries(ACCOUNTS).map(([k,[label,bg]])=>`<button type="button" class="${k===formAcct?'on':''}" style="${k===formAcct?'background:'+bg+';color:#fff':''}" onclick="pickAcct('${k}')">${label}</button>`).join("");
-  fMoveNote.textContent=(editing&&formAcct!==account)?"This card will move to your "+ACCOUNTS[formAcct][0].slice(3)+" board when you save.":"";}
+let formAcct=account;
+function fillKinds(val){const list=typesBy[formAcct]||[];
+  fKind.innerHTML=`<option value="">No type</option>`+list.map(t=>`<option value="${esc(t.name)}">${t.emoji} ${esc(t.name)}</option>`).join("");
+  fKind.value=list.some(t=>t.name===val)?val:"";}
+function drawAcct(){fAcct.innerHTML=platforms.map(p=>`<button type="button" class="${p.id===formAcct?'on':''}" style="${p.id===formAcct?'background:'+p.color+';color:#fff':''}" onclick="pickAcct('${p.id}')">${p.emoji} ${esc(p.name)}</button>`).join("");
+  fMoveNote.textContent=(editing&&formAcct!==account)?"This card will move to your "+pname(formAcct)+" board when you save.":"";}
 function pickAcct(k){const v=fKind.value;formAcct=k;drawAcct();fillKinds(v);}
 function openEditor(id,stage){
   editing=id?cards.find(c=>c.id===id):null;
@@ -405,21 +553,108 @@ function saveCard(){
   else boards[formAcct].push({id:Date.now(),...data});
   localStorage.setItem(KEY2,JSON.stringify(boards));cards=boards[account];
   if(allowEmptyPersist&&localStorage.getItem(KEY4)===null)localStorage.setItem(KEY4,JSON.stringify(ideas));
-  const moved=formAcct!==account;dlg.close();
-  if(moved&&confirm("Saved to "+ACCOUNTS[formAcct][0].slice(3)+". Go to that board now?"))switchAccount(formAcct);else render();
+  const moved=formAcct!==account;const dest=pname(formAcct);dlg.close();
+  if(moved&&confirm("Saved to "+dest+". Go to that board now?"))switchAccount(formAcct);else render();
 }
 function delCard(){if(editing&&confirm("Delete this post?")){cards=cards.filter(c=>c!==editing);save();render();dlg.close();}}
-function exportData(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({...boards,types:typesBy,ideas},null,2)],{type:"application/json"}));a.download="content-things-backup.json";a.click();}
-function importData(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)){cards=d;save();}else{boards={instagram:d.instagram||[],rednote:d.rednote||[]};if(d.types){typesBy=d.types;saveTypes();}if(d.ideas){ideas=d.ideas;saveIdeas();}cards=boards[account];localStorage.setItem(KEY2,JSON.stringify(boards));}render();}catch{alert("That file couldn't be read.");}};r.readAsText(e.target.files[0]);}
+const DAY=86400000;
+const KEY_EXPORT="lastExport";
+const KEY_SNOOZE="haley-content-things-backup-snooze";
+function stampOf(item){
+  const times=[];
+  if(typeof item.id==="number"&&item.id>=1e12&&item.id<Date.now()+DAY) times.push(item.id);
+  if(typeof item.created==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(item.created)){
+    const t=new Date(item.created+"T00:00").getTime();
+    if(!Number.isNaN(t)) times.push(t);
+  }
+  return times.length?Math.min(...times):null;
+}
+function earliestContentAt(){
+  let min=null;
+  const items=[...ideas];
+  platforms.forEach(p=>(boards[p.id]||[]).forEach(c=>items.push(c)));
+  items.forEach(item=>{const t=stampOf(item);if(t!=null&&(min==null||t<min)) min=t;});
+  return min;
+}
+function hasAnyContent(){
+  if(ideas.length) return true;
+  return platforms.some(p=>(boards[p.id]||[]).length>0);
+}
+function backupDue(){
+  if(!hasAnyContent()) return false;
+  const now=Date.now();
+  const snooze=Number(localStorage.getItem(KEY_SNOOZE)||0);
+  if(snooze>now) return false;
+  const last=Number(localStorage.getItem(KEY_EXPORT)||0);
+  if(last>0) return now-last>=7*DAY;
+  const first=earliestContentAt();
+  return first!=null&&now-first>=3*DAY;
+}
+function lastBackupText(){
+  const last=Number(localStorage.getItem(KEY_EXPORT)||0);
+  if(!last) return "Last backup: never";
+  const days=Math.floor((Date.now()-last)/DAY);
+  if(days<=0) return "Last backup: today";
+  if(days===1) return "Last backup: 1 day ago";
+  return "Last backup: "+days+" days ago";
+}
+function refreshBackup(){
+  const el=document.getElementById("backup");
+  const line=document.getElementById("lastBackup");
+  if(line) line.textContent=lastBackupText();
+  if(el) el.hidden=!backupDue();
+}
+function snoozeBackup(){
+  localStorage.setItem(KEY_SNOOZE,String(Date.now()+7*DAY));
+  refreshBackup();
+}
+function exportData(){
+  localStorage.setItem(KEY_EXPORT,String(Date.now()));
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({...boards,platforms,types:typesBy,ideas},null,2)],{type:"application/json"}));a.download="content-things-backup.json";a.click();
+  refreshBackup();
+}
+function importData(e){const file=e.target.files&&e.target.files[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);applyImport(d);}catch{alert("That file couldn't be read.");}e.target.value="";};r.readAsText(file);}
+function applyImport(d){
+  if(Array.isArray(d)){cards=d;boards[account]=cards;save();render();return;}
+  const cardKeys=Object.keys(d).filter(k=>!RESERVED.has(k)&&Array.isArray(d[k]));
+  const next={};
+  let plats=null;
+  if(Array.isArray(d.platforms)&&d.platforms.length){
+    plats=d.platforms.filter(p=>p&&p.id&&!RESERVED.has(String(p.id))).map(p=>({
+      id:String(p.id),name:String(p.name||p.id),emoji:String(p.emoji||"📌"),color:String(p.color||"#8b5cf6")
+    }));
+  }
+  if(!plats){
+    const ordered=orderedIds(cardKeys);
+    plats=ordered.map(knownMeta);
+  }
+  const have=new Set(plats.map(p=>p.id));
+  cardKeys.forEach(k=>{if(!have.has(k)){plats.push(knownMeta(k));have.add(k);}});
+  plats.forEach(p=>{next[p.id]=Array.isArray(d[p.id])?d[p.id]:[];});
+  if(!plats.length){plats=[knownMeta("instagram")];next.instagram=Array.isArray(d.instagram)?d.instagram:[];}
+  boards=next;platforms=plats;
+  if(d.types&&typeof d.types==="object"&&!Array.isArray(d.types)) typesBy=d.types;
+  platforms.forEach(p=>{if(!Array.isArray(typesBy[p.id])) typesBy[p.id]=cloneTypes();});
+  if(Array.isArray(d.ideas)) ideas=d.ideas;
+  if(!platforms.some(p=>p.id===account)){account=platforms[0].id;if(view!=="ideas") view=account;}
+  if(view!=="ideas") view=platforms.some(p=>p.id===view)?view:account;
+  cards=boards[account];
+  localStorage.setItem(KEY2,JSON.stringify(boards));
+  savePlatforms();saveTypes();
+  if(Array.isArray(d.ideas)) saveIdeas();
+  localStorage.setItem(KEY2+"-active",view);
+  render();
+}
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"&&document.getElementById("welcome").classList.contains("show")){dismissWelcome();return;}
+  if(e.key==="Enter"&&adlg.open&&e.target.tagName!=="TEXTAREA"){e.preventDefault();addPlatform();return;}
+  if(e.key==="Enter"&&bdlg.open&&e.target.tagName!=="TEXTAREA"){e.preventDefault();savePlatformEdit();return;}
   if(e.key==="Enter"&&idlg.open&&e.target.tagName!=="TEXTAREA"){e.preventDefault();saveIdea();return;}
   if(e.key==="Enter"&&dlg.open&&e.target.tagName!=="TEXTAREA"){e.preventDefault();saveCard();}
 });
-render();
 
 const tdlg=document.getElementById("tdlg");
-function openTypes(){tdlgSub.textContent="For your "+ACCOUNTS[account][0].slice(3)+" board. Renaming a type updates its cards too.";drawTypes();tdlg.showModal();}
+function openTypes(){tdlgSub.textContent="For your "+pname(account)+" board. Renaming a type updates its cards too.";drawTypes();tdlg.showModal();}
 function drawTypes(){
   tlist.innerHTML=types().map((t,i)=>`<div class="trow">
     <input type="color" value="${t.color}" oninput="types()[${i}].color=this.value;saveTypes();render()">
@@ -447,7 +682,7 @@ function renderIdeas(){
     <button class="starbtn ${i.starred?'on':''}" style="margin:0" title="Mark as priority" onclick="event.stopPropagation();starIdea(${i.id})">${i.starred?'★':'☆'}</button>
     <div class="body"><div class="title">${esc(i.title)}${i.starred?' <span class="prio">PRIORITY</span>':''}</div>
       ${i.notes?`<div class="notes">${esc(i.notes)}</div>`:""}
-      ${(i.sentTo&&i.sentTo.length)?`<span class="made">Already on ${i.sentTo.map(a=>ACCOUNTS[a][0].slice(3)).join(" + ")}</span>`:""}</div>
+      ${(i.sentTo&&i.sentTo.length)?`<span class="made">Already on ${i.sentTo.map(a=>pname(a)).filter(Boolean).join(" + ")}</span>`:""}</div>
     <button class="mkbtn" onclick="event.stopPropagation();openMake(${i.id})">Make card →</button></div>
   </div>`).join("");
 }
@@ -460,52 +695,114 @@ function saveIdea(){const d={title:iTitle.value.trim()||"Untitled idea",notes:iN
   if(editingIdea)Object.assign(editingIdea,d);else ideas.unshift({id:Date.now(),created:today(),...d});saveIdeas();render();idlg.close();}
 function delIdea(){if(editingIdea&&confirm("Delete this idea?")){ideas=ideas.filter(i=>i!==editingIdea);saveIdeas();render();idlg.close();}}
 function openMake(id){makingIdea=ideas.find(x=>x.id===id);mSub.textContent=makingIdea.title;
-  mAccts.innerHTML=Object.entries(ACCOUNTS).map(([k,[label]])=>`<div class="acct" id="ma-${k}">
-    <label><input type="checkbox" style="width:auto" onchange="document.getElementById('ma-${k}').classList.toggle('on',this.checked)"> ${label}</label>
-    <select>${`<option value="">No type</option>`+typesBy[k].map(t=>`<option value="${esc(t.name)}">${t.emoji} ${esc(t.name)}</option>`).join("")}</select></div>`).join("");
+  mAccts.innerHTML=platforms.map(p=>`<div class="acct" id="ma-${p.id}">
+    <label><input type="checkbox" style="width:auto" onchange="document.getElementById('ma-${p.id}').classList.toggle('on',this.checked)"> ${p.emoji} ${esc(p.name)}</label>
+    <select>${`<option value="">No type</option>`+(typesBy[p.id]||[]).map(t=>`<option value="${esc(t.name)}">${t.emoji} ${esc(t.name)}</option>`).join("")}</select></div>`).join("");
   mStage.innerHTML=STAGES.filter(([s])=>s!=="Posted").map(([s])=>`<option>${s}</option>`).join("");mKeep.checked=false;mdlg.showModal();}
 function makeCard(){
-  const picks=Object.keys(ACCOUNTS).filter(k=>document.querySelector(`#ma-${k} input`).checked);
-  if(!picks.length){alert("Pick Instagram, RedNote, or both.");return;}
+  const picks=platforms.map(p=>p.id).filter(k=>{const box=document.querySelector(`#ma-${k} input`);return box&&box.checked;});
+  if(!picks.length){alert("Pick at least one board.");return;}
   picks.forEach((k,n)=>{const kind=document.querySelector(`#ma-${k} select`).value;const st=mStage.value;
     boards[k].push({id:Date.now()+n,title:makingIdea.title,notes:makingIdea.notes||"",kind,stage:st,starred:!!makingIdea.starred,film:(st==="Filming"||st==="Filmed")?today():"",post:""});});
   if(mKeep.checked){makingIdea.sentTo=[...new Set([...(makingIdea.sentTo||[]),...picks])];}else{ideas=ideas.filter(i=>i!==makingIdea);}
   localStorage.setItem(KEY2,JSON.stringify(boards));saveIdeas();cards=boards[account];mdlg.close();render();
 }
 
+function openAddPlatform(){
+  pName.value="";pEmoji.value="📌";
+  presets.innerHTML=PRESETS.map(p=>{
+    const taken=platforms.some(b=>b.name.toLowerCase()===p.name.toLowerCase());
+    return `<button type="button" class="preset" data-name="${esc(p.name)}" ${taken?"disabled":""} onclick="applyPreset(this)">${p.emoji} ${esc(p.name)}</button>`;
+  }).join("");
+  adlg.showModal();pName.focus();
+}
+function applyPreset(btn){
+  const p=PRESETS.find(x=>x.name===btn.dataset.name);if(!p)return;
+  pEmoji.value=p.emoji;pName.value=p.name;
+  document.querySelectorAll("#presets .preset").forEach(b=>b.classList.toggle("on",b===btn));
+}
+function addPlatform(){
+  const name=pName.value.trim();
+  if(!name){alert("Give the platform a name.");return;}
+  if(platforms.some(p=>p.name.toLowerCase()===name.toLowerCase())){alert("You already have a board named "+name+".");return;}
+  const id=uniqueId(name);
+  const known=KNOWN[slug(name)]||KNOWN[id];
+  const typed=pEmoji.value.trim();
+  const emoji=typed&&typed!=="📌"?typed:(known?.emoji||typed||"📌");
+  const color=known?.color||BOARD_COLORS[platforms.length%BOARD_COLORS.length];
+  platforms.push({id,name,emoji,color});
+  boards[id]=[];
+  typesBy[id]=cloneTypes();
+  savePlatforms();saveTypes();
+  localStorage.setItem(KEY2,JSON.stringify(boards));
+  if(allowEmptyPersist&&localStorage.getItem(KEY4)===null)localStorage.setItem(KEY4,JSON.stringify(ideas));
+  adlg.close();
+  switchAccount(id);
+}
+function openBoardEditor(){
+  const p=platformById(account);if(!p)return;
+  bEmoji.value=p.emoji;bName.value=p.name;
+  bdlg.showModal();bName.focus();
+}
+function savePlatformEdit(){
+  const p=platformById(account);if(!p)return;
+  const name=bName.value.trim();
+  if(!name){alert("Give the board a name.");return;}
+  if(platforms.some(x=>x!==p&&x.name.toLowerCase()===name.toLowerCase())){alert("You already have a board named "+name+".");return;}
+  p.name=name;p.emoji=bEmoji.value.trim()||"📌";
+  savePlatforms();bdlg.close();render();
+}
+function deletePlatform(){
+  if(platforms.length<=1){alert("Keep at least one board. Add another before deleting this one.");return;}
+  const p=platformById(account);if(!p)return;
+  const n=(boards[p.id]||[]).length;
+  const msg=n?`Delete ${p.name}? This removes the board and its ${n} post${n===1?"":"s"}. This can't be undone.`:`Delete ${p.name}?`;
+  if(!confirm(msg))return;
+  delete boards[p.id];
+  delete typesBy[p.id];
+  platforms=platforms.filter(x=>x.id!==p.id);
+  ideas.forEach(i=>{if(Array.isArray(i.sentTo)) i.sentTo=i.sentTo.filter(id=>id!==p.id);});
+  const next=platforms[0];
+  account=next.id;view=next.id;cards=boards[account]||[];
+  localStorage.setItem(KEY2,JSON.stringify(boards));
+  localStorage.setItem(KEY2+"-active",view);
+  savePlatforms();saveTypes();saveIdeas();
+  bdlg.close();render();
+}
+
 function dismissWelcome(){document.getElementById("welcome").classList.remove("show");}
 function dismissTip(){localStorage.setItem(TIPKEY,"1");const el=document.getElementById("homeTip");if(el)el.remove();}
 let welcomeChosen=false;
+function persistChoice(active){
+  localStorage.setItem(KEY2,JSON.stringify(boards));
+  localStorage.setItem(KEY4,JSON.stringify(ideas));
+  localStorage.setItem(KEY2+"-active",active);
+  savePlatforms();saveTypes();
+}
+function pullIdeasFromBoards(){
+  ideas=[];const seen=new Set();
+  boardIds().forEach(b=>{boards[b]=boards[b].filter(c=>{if(c.stage!=="Idea")return true;const k=(c.title||"").trim().toLowerCase();
+    if(!seen.has(k)){seen.add(k);ideas.push({id:c.id,title:c.title,notes:c.notes||"",starred:!!c.starred,created:today()});}return false;});});
+  boardIds().forEach(b=>boards[b].forEach(c=>{if(c.stage==="Idea")c.stage="Planned";}));
+}
 function startWithSamples(){
   if(welcomeChosen)return;
-  boards={instagram:seed.map(c=>({...c})),rednote:[]};
-  ideas=[];
-  const seen=new Set();
-  ["instagram","rednote"].forEach(b=>{boards[b]=boards[b].filter(c=>{if(c.stage!=="Idea")return true;const k=c.title.trim().toLowerCase();
-    if(!seen.has(k)){seen.add(k);ideas.push({id:c.id,title:c.title,notes:c.notes||"",starred:!!c.starred,created:today()});}return false;});});
-  ["instagram","rednote"].forEach(b=>boards[b].forEach(c=>{if(c.stage==="Idea")c.stage="Planned"}));
-  try{
-    localStorage.setItem(KEY2,JSON.stringify(boards));
-    localStorage.setItem(KEY4,JSON.stringify(ideas));
-    localStorage.setItem(KEY2+"-active","ideas");
-  }catch(e){alert("Couldn't save in this browser. Check that site data isn't blocked.");return;}
+  freshInstagram();
+  boards.instagram=seed.map(c=>({...c}));
+  pullIdeasFromBoards();
+  try{persistChoice("ideas");}catch(e){alert("Couldn't save in this browser. Check that site data isn't blocked.");return;}
   welcomeChosen=true;
-  view="ideas";account="instagram";cards=boards[account];
+  view="ideas";account="instagram";cards=boards.instagram;
   dismissWelcome();render();
 }
 function startEmpty(){
   if(welcomeChosen)return;
-  boards={instagram:[],rednote:[]};
-  ideas=[];
-  try{
-    localStorage.setItem(KEY2,JSON.stringify(boards));
-    localStorage.setItem(KEY4,JSON.stringify(ideas));
-    localStorage.setItem(KEY2+"-active","instagram");
-  }catch(e){alert("Couldn't save in this browser. Check that site data isn't blocked.");return;}
+  freshInstagram();
+  try{persistChoice("instagram");}catch(e){alert("Couldn't save in this browser. Check that site data isn't blocked.");return;}
   welcomeChosen=true;
-  view="instagram";account="instagram";cards=boards[account];filter="All";
   dismissWelcome();render();
 }
+render();
 if(firstVisit){
   const w=document.getElementById("welcome");
   w.classList.add("show");
@@ -513,6 +810,7 @@ if(firstVisit){
   if(primary)primary.focus();
 }
 if(localStorage.getItem(TIPKEY)==="1"){const el=document.getElementById("homeTip");if(el)el.remove();}
+
 </script>
 </body>
 </html>
